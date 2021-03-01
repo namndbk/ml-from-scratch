@@ -39,7 +39,7 @@ class SVM:
 
     kernels = {"linear": "_linear_kernel", "poly": "_polynomial_kernel", "rbf": "_gaussian_kernel"}
 
-    def __init__(self, C=1.0, kernel="linear", degree=3, r=0.0, gamma="auto", lr=0.001, regularization_strength=1000, n_iters=5000):
+    def __init__(self, C=1.0, kernel="linear", degree=3, r=0.0, gamma="auto", lr=0.001, regularization_strength=1000, n_iters=5000, cost_threshold=0.001):
         """
         :params
             degree: thua so nhan cho kernel poly
@@ -58,12 +58,31 @@ class SVM:
         self.lr = lr
         self.r = r
         self.n_iters = n_iters
+        self.gamma = gamma
+        self.cost_threshold = cost_threshold
     
     def _linear_kernel(self, x, z):
+        """
+        k(x, z) = np.dot(x, z.T)
+        """
         return np.dot(x, z.T)
     
     def _polynomial_kernel(self, x, z):
         return (self.r + self.gamma*np.dot(x, z.T))**self.degree
+    
+     def _gaussian_kernel(self, x, z):
+        """
+        k(x, z) = exp(-gamma*(norm_2(x, z)**2))
+        """
+        return np.exp(-self.gamma*(cdist(x, z)**2))
+
+    def _sigmoid_kernel(self, x, z):
+        """
+        k(x, z) = tanh(gamma*np.dot(x, z) + r)
+        """
+        def tanh(s):
+            return (np.exp(s)-np.exp(-s))/(np.exp(s)+np.exp(-s))
+        return tanh(self.gamma*np.dot(x, z.T) + self.r)
     
     def compute_cost(self, W, X, Y):
         # calculate hinge loss
@@ -126,6 +145,7 @@ class SVM:
     def fit(self, X_train, y_train):
         X_train = np.array(X_train)
         y_train = np.array(y_train)
+        X_train = getattr(self, self.kernels[self.kernel])(X_train, X_train)
 
         self.X = X_train
         self.y = y_train

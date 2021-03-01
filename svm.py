@@ -81,12 +81,17 @@ class SVM:
         k(x, z) = tanh(gamma*np.dot(x, z) + r)
         """
         def tanh(s):
+            """
+            define tanh function
+            """
             return (np.exp(s)-np.exp(-s))/(np.exp(s)+np.exp(-s))
         return tanh(self.gamma*np.dot(x, z.T) + self.r)
     
     def compute_cost(self, W, X, Y):
         # calculate hinge loss (cong thuc cua svm)
+        # N lay ra so diem du lieu
         N = X.shape[0]
+        # khoang cach tu diem du lieu toi mat phang W
         distances = 1 - Y * (np.dot(X, W))
         distances[distances < 0] = 0  # equivalent to max(0, distance)
         hinge_loss = self.regularization_strength * (np.sum(distances) / N)
@@ -96,6 +101,7 @@ class SVM:
         return cost
     
     def calculate_cost_gradient(self, W, X_batch, Y_batch):
+        # chi la tao mang du lieu
         if type(Y_batch) == np.float64:
             Y_batch = np.array([Y_batch])
             X_batch = np.array([X_batch])
@@ -103,6 +109,7 @@ class SVM:
             Y_batch = np.array([Y_batch])
             X_batch = np.array([X_batch])
 
+        # tinh khoang cac tu diem du lieu toi mat phang W
         distance = 1 - (Y_batch * np.dot(X_batch, W))
         dw = np.zeros(len(W))
 
@@ -111,30 +118,37 @@ class SVM:
                 di = W
             else:
                 di = W - (self.regularization_strength * Y_batch[ind] * X_batch[ind])
+            #Tong khoang cach tren tat ca tap du lieu
             dw += di
 
         dw = dw/len(Y_batch)  # average
         return dw
     
     def sgd(self):
+        # max_epochs: so buoc lap toi da
         max_epochs = 5000
         weights = np.zeros(self.X.shape[1])
+        #nth luu lai so lan check dieu kien hoi tu
         nth = 0
+        #prev_cost luu gia tri cost function o step truoc do
         prev_cost = float("inf")
         cost_threshold = 0.001  # in percent
         # stochastic gradient descent
         for epoch in range(1, max_epochs):
-            # shuffle data - buoc nay rat quan trong
+            # shuffle data - buoc nay rat quan trong, xao tron data
             X, Y = shuffle(self.X, self.y)
             for ind, x in enumerate(X):
+                # ascent tinh toan dao ham tren mot diem du lieu
                 ascent = self.calculate_cost_gradient(weights, x, Y[ind])
+                # cap nhat trong so W
                 weights = weights - (self.lr * ascent)
 
             # check sau mot so vong lap nhat dinh
             if epoch == 2 ** nth or epoch == max_epochs - 1:
+                # tinh toan cost function tren ca tap du lieu
                 cost = self.compute_cost(weights, self.X, self.y)
                 print("Epoch is: {} and Cost is: {}".format(epoch, cost))
-                # check converged
+                # check converged, neu du nho thi dug lai
                 if abs(prev_cost - cost) < cost_threshold * prev_cost:
                     return weights
                 prev_cost = cost
@@ -150,6 +164,7 @@ class SVM:
         self.X = X_train
         self.y = y_train
 
+        # tinh toan bo trong so W dua tren gradient descent
         self.W = self.sgd()
     
     def predict(self, X_test):
@@ -159,6 +174,7 @@ class SVM:
         
         y_pred = np.array([])
         for i in range(X_test.shape[0]):
+            # tinh toan nhan tren tung diem du lieu
             y_ = np.sign(np.dot(X_test[i], self.W.T))
             y_pred = np.append(y_pred, y_)
         return y_pred        

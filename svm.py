@@ -85,21 +85,20 @@ class SVM:
         return tanh(self.gamma*np.dot(x, z.T) + self.r)
     
     def compute_cost(self, W, X, Y):
-        # calculate hinge loss
+        # calculate hinge loss (cong thuc cua svm)
         N = X.shape[0]
         distances = 1 - Y * (np.dot(X, W))
         distances[distances < 0] = 0  # equivalent to max(0, distance)
         hinge_loss = self.regularization_strength * (np.sum(distances) / N)
 
-        # calculate cost
+        # tinh toan ham mat mat
         cost = 1 / 2 * np.dot(W, W) + hinge_loss
         return cost
     
     def calculate_cost_gradient(self, W, X_batch, Y_batch):
-        # if only one example is passed (eg. in case of SGD)
         if type(Y_batch) == np.float64:
             Y_batch = np.array([Y_batch])
-            X_batch = np.array([X_batch])  # gives multidimensional array
+            X_batch = np.array([X_batch])
         else:
             Y_batch = np.array([Y_batch])
             X_batch = np.array([X_batch])
@@ -122,20 +121,20 @@ class SVM:
         weights = np.zeros(self.X.shape[1])
         nth = 0
         prev_cost = float("inf")
-        cost_threshold = 0.01  # in percent
+        cost_threshold = 0.001  # in percent
         # stochastic gradient descent
         for epoch in range(1, max_epochs):
-            # shuffle to prevent repeating update cycles
+            # shuffle data - buoc nay rat quan trong
             X, Y = shuffle(self.X, self.y)
             for ind, x in enumerate(X):
                 ascent = self.calculate_cost_gradient(weights, x, Y[ind])
                 weights = weights - (self.lr * ascent)
 
-            # convergence check on 2^nth epoch
+            # check sau mot so vong lap nhat dinh
             if epoch == 2 ** nth or epoch == max_epochs - 1:
                 cost = self.compute_cost(weights, self.X, self.y)
                 print("Epoch is: {} and Cost is: {}".format(epoch, cost))
-                # stoppage criterion
+                # check converged
                 if abs(prev_cost - cost) < cost_threshold * prev_cost:
                     return weights
                 prev_cost = cost
@@ -145,6 +144,7 @@ class SVM:
     def fit(self, X_train, y_train):
         X_train = np.array(X_train)
         y_train = np.array(y_train)
+        # using kernel function transform data
         X_train = getattr(self, self.kernels[self.kernel])(X_train, X_train)
 
         self.X = X_train

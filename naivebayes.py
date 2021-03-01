@@ -12,6 +12,7 @@ class MultinomialNB():
         alpha - hej so lam tro xac suat
         prob - ma tran xac suat cua tung tu thuoc moi class- prob[i, j] - xac suat tu thu j roi vao class i
         prob_c - luu xac suat cua class
+        __classes - danh sach cac nhan
         """
         self.alpha = alpha
         self.__classes = []

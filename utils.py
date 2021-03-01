@@ -59,7 +59,7 @@ def parse(file_name):
     return sents, lables
 
 
-def build_dict(sentences):
+def build_dict(sentences, max_df):
     DICT = {}
     count = 0
     print('Building dictionary !')
@@ -90,4 +90,6 @@ def bag_of_word(sentence, DICT):
     return vector
 
 if __name__ == '__main__':
-    parse_file('train.txt')
+    DICT = load_dict()
+    for x in DICT:
+        print(x)

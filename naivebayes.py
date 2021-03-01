@@ -1,10 +1,10 @@
 import numpy as np
 import utils
 from sklearn.model_selection import train_test_split
-from tree import DecisionTreeID3
-from sklearn.tree import DecisionTreeClassifier
+# from tree import DecisionTreeID3
 import math
 import pandas as pd
+from tree import DecisionTreeClassifier
 
 class MultinomialNB():
     def __init__(self, alpha=1.0):
@@ -53,7 +53,7 @@ class MultinomialNB():
 
 if __name__ == '__main__':
     X_, y = utils.parse('data/emails.csv')
-    utils.build_dict(X_)
+    # utils.build_dict(X_)
     DICT = utils.load_dict()
     X = np.zeros((len(X_), len(DICT)))
     for i in range(len(X_)):
@@ -62,13 +62,21 @@ if __name__ == '__main__':
         for j in range(len(X[0])):
             if X[i, j] > 0:
                 X[i, j] = 1
-    X = pd.DataFrame(X)
-    y = pd.DataFrame(y)
+            else:
+                X[i, j] = 0
+    words = [x for x in DICT]
+    # X = pd.DataFrame(X)
+    # y = pd.DataFrame(y)
     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, random_state=42)
+    print(y_test)
     # model = MultinomialNB(0.001)
     # model.fit(X_train, y_train)
-    tree = DecisionTreeClassifier()
-    tree.fit(X_train, y_train)
-    print(X_test.shape[1])
-    y_pred = model.predict(X_test)
-    model.accuracy(y_test, y_pred)
+    # tree = DecisionTreeClassifier(5, words=words)
+    # tree.fit(X_train[:1000], y_train[:1000], is_root=True)
+    # y_pred = tree.predict(X_test)
+    # print(np.sum(y_true == y_pred))
+    # tree = DecisionTreeClassifier()
+    # tree.fit(X_train, y_train)
+    # print(X_test.shape[1])
+    # y_pred = tree.predict(X_test)
+    # print(np.sum(y_true == y_pred))

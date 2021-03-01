@@ -8,35 +8,52 @@ from tree import DecisionTreeClassifier
 
 class MultinomialNB():
     def __init__(self, alpha=1.0):
+        """
+        alpha - hej so lam tro xac suat
+        prob - ma tran xac suat cua tung tu thuoc moi class- prob[i, j] - xac suat tu thu j roi vao class i
+        prob_c - luu xac suat cua class
+        """
         self.alpha = alpha
         self.__classes = []
         self.prob = None
         self.prob_c = None
     def fit(self, X_train, y_train):
+        # lay ra danh sach class co trong data train
         self.__classes = list(set(y_train))
+        # ma tran count luu so tu xuat hien count[i, j] - so lan tu j xuat hien trong class i
         count = np.zeros((len(self.__classes), X_train.shape[1]))
         len_class = np.zeros(len(self.__classes))
+        # khoi tao ma tran prob_c prob
         self.prob_c = np.zeros(len(self.__classes))
         self.prob = np.zeros((len(self.__classes), X_train.shape[1]))
+        # lap qua du lieu
         for i, c in enumerate(y_train):
+            # dem so lan class c xuat hien
             self.prob_c[int(c) - 1] += 1
             len_class[int(c) - 1] += np.sum(X_train[i])
             count[int(c) - 1] += X_train[i]
+        # tinh xac suat cua class
         self.prob_c = self.prob_c/X_train.shape[0]
+        # duyet qua tung class, dem xem trong moi class do co nhung tu nao, xuat hien bao nhieu lan => dua thanh xac suat
         for c in self.__classes:
             self.prob[int(c) - 1] = (count[int(c) - 1] + self.alpha)/(len_class[int(c) - 1] + self.alpha*X_train.shape[1])
 
 
     def predict(self, X_test):
+        # bien y_pred luu lai nhan
         y_pred = []
+        # duyet qua tung diem du lieu test
         for i in range(X_test.shape[0]):
             _max = -99999.0
             _c = 0
+            # duyet qua tung class
             for c in self.__classes:
+                # tinh xac suat du lieu do roi vao class c la bao nhieu
                 _prob = math.log(self.prob_c[int(c) - 1])
                 for j in range(X_test.shape[1]):
                     if X_test[i][j] != 0:
                         _prob += math.log(self.prob[int(c) - 1][j])*X_test[i][j]
+                # so sanh xac suat voi cac class khac, luu lai class lam xac suat co gia tri lon nhat
                 if _prob > _max:
                     _max = _prob
                     _c = c

@@ -1,8 +1,10 @@
 import numpy as np
 import pickle
-from pyvi import ViTokenizer
 import re
 import pandas as pd
+
+
+from sklearn.datasets import load_iris
 
 correct_mapping = {
     "Subject": "",
@@ -88,6 +90,19 @@ def bag_of_word(sentence, DICT):
         else:
             continue
     return vector
+
+
+def load_iris_data():
+    data = load_iris()
+    _X = data.data
+    _y = data.target
+    X = _X[_y < 2]
+    y = _y[_y < 2]
+    for i, c in enumerate(y):
+        if c == 0:
+            y[i] = -1
+    return X, y
+
 
 if __name__ == '__main__':
     DICT = load_dict()

@@ -1,5 +1,9 @@
 import numpy as np
 from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
+
+import utils
+import metrics
 
 
 class SimpleSVM:
@@ -70,7 +74,7 @@ class SVM:
     def _polynomial_kernel(self, x, z):
         return (self.r + self.gamma*np.dot(x, z.T))**self.degree
     
-     def _gaussian_kernel(self, x, z):
+    def _gaussian_kernel(self, x, z):
         """
         k(x, z) = exp(-gamma*(norm_2(x, z)**2))
         """
@@ -127,6 +131,7 @@ class SVM:
     def sgd(self):
         # max_epochs: so buoc lap toi da
         max_epochs = 5000
+        print(self.X.shape[1])
         weights = np.zeros(self.X.shape[1])
         #nth luu lai so lan check dieu kien hoi tu
         nth = 0
@@ -159,7 +164,7 @@ class SVM:
         X_train = np.array(X_train)
         y_train = np.array(y_train)
         # using kernel function transform data
-        X_train = getattr(self, self.kernels[self.kernel])(X_train, X_train)
+        # X_train = getattr(self, self.kernels[self.kernel])(X_train, X_train)
 
         self.X = X_train
         self.y = y_train
@@ -169,12 +174,21 @@ class SVM:
     
     def predict(self, X_test):
         X_test = np.array(X_test)
+        
         if len(X_test.shape) == 1:
             X_test = np.array([X_test])
-        
         y_pred = np.array([])
         for i in range(X_test.shape[0]):
             # tinh toan nhan tren tung diem du lieu
             y_ = np.sign(np.dot(X_test[i], self.W.T))
             y_pred = np.append(y_pred, y_)
-        return y_pred        
+        return y_pred 
+
+
+if __name__ == "__main__":
+    X, y = utils.load_iris_data()
+    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.2, random_state=42)
+    model = SVM()
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    print(metrics.accuracy_score(y_test, y_pred))

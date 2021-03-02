@@ -1,14 +1,24 @@
 import numpy as np
 
 
+# Class representation a node in Decision Tree
 class Node:
     def __init__(self, tree, word=None, parent=None, level=0, entropy=0., leaf=False):
         """
-        parent = node cha
-        entropy - entropy tai node hien tai
-        level - muc cua node hien tai
-        info_gain- thong tin gain
-        word - gia tri cua node
+        @param:
+            tree: tree
+            word: word
+            parent: parent node
+            level: level node
+            entropy: entropy cost in node
+            leaf: leaf node or non-leaf
+        @type:
+            tree: Node
+            word: int
+            parent: Node
+            level: int
+            entropy: float
+            leaf: boolean
         """
         self.parent = parent
         self.entropy = entropy
@@ -50,12 +60,22 @@ class Node:
 
 class DecisionTreeClassifier:
     def __init__(self, depth, words):
+        """
+        @param:
+            depth: limited depth of the tree
+            words: list of word - dictionary
+        @type:
+            depth: int
+            words: List[int]
+        """
         self.depth_limit = depth
         self.nodes = [[]]
         self.words = words
 
-    # tra ve ti le moi nhan trong tap data
     def class_distribution(self, classes):
+        """
+        returns the proportion of each label in the classes vector
+        """
         # lay danh sach labels
         #times so lan label xuat hien trong tap du lieu
         labels, times = np.unique(classes, return_counts=True)
@@ -63,15 +83,19 @@ class DecisionTreeClassifier:
         proportions = ((times * 1.) / len(classes)).reshape((len(labels), 1))
         return labels, proportions
 
-    # select_class() returns the most probable class in the classes vector
     def select_class(self, classes):
+        """
+        returns the most probable class in the classes vector
+        """
         labels, proportions = self.class_distribution(classes)
         # tra ve class co kha nang xay ra nhat
         max_index = np.argmax(proportions)
         return labels[max_index]
 
-    # get_entropy() computes the entropy of the classes vector
     def get_entropy(self, classes):
+        """
+        computes the entropy of the classes vector
+        """
         if len(classes) == 0:
             return 0.
         labels, proportions = self.class_distribution(classes)
@@ -80,7 +104,6 @@ class DecisionTreeClassifier:
         return entropy[0][0]
 
     def compute_info_gain(self):
-        #tính toán thông tin thu được, luu lai entropy tung node
         for level in self.nodes:
             for node in level:
                 if (node.level == (self.depth_limit-1)):
@@ -89,6 +112,9 @@ class DecisionTreeClassifier:
                     node.info_gain = abs(node.entropy - (node.child[0].entropy + node.child[1].entropy))
 
     def print_tree(self):
+        """
+        print tretree structure
+        """
         map = []
         rep = self.desciption()+'\n'
         for level in self.nodes:
@@ -114,8 +140,10 @@ class DecisionTreeClassifier:
                         '\t' * (node.level), absent, node.level, node.entropy, par_w))
         return rep
 
-    # tim phan cat voi entropy thap nhat
     def find_split(self, words, classes):
+        """
+        finds the split with lowest entropy
+        """
         unique_words = np.unique(words)
         min_entropy = np.inf
         split = 0
@@ -131,15 +159,17 @@ class DecisionTreeClassifier:
                 split = u
         return split, min_entropy
 
-    # train () thực hiện quy trình sau:
-    # 1) Tại nút gốc, tính toán entropy, gọi nó là root.entropy
-    # 2) nếu root.entropy == 0, một nút lá và dừng
-    # 3) nếu không, bắt đầu tìm kiếm các phần có thể
-    # 4) đối với mỗi từ, tính toán entropy nhỏ nhất khi cây được tách bằng cách sử dụng tính năng này
-    # 5) chọn từ có entropy nhỏ nhất và tách cây
-    # 6) xác minh xem có phải tạo nút tách thành một chiếc lá hay không
-    # 7) Tạo 2 nhánh cây và quay lại 1.
     def fit(self, data, classes, current_depth=0, parent_node=None, is_leaf=False, is_root=False):
+        """
+        executes the following procedure:
+        1) At the root node we calculate the entropy, we'll call it root.entropy
+        2) if root.entropy == 0, we create a leaf node and stop
+        3) else, we'll start looking for possible splits
+        4) for each word, we calculate the smallest entropy when the tree is split using this feature
+        5) we select the word with smallest entropy and split the tree
+        6) we verify if we have to make the split node a leaf
+        7) generate the 2 tree branches and go back to 1.
+        """
         if is_root:
             self.nodes = [[]]
         init_entropy = self.get_entropy(classes)
@@ -151,14 +181,16 @@ class DecisionTreeClassifier:
                 leaf_node.info_gain = abs(parent_node.entropy - init_entropy)
             return leaf_node
         else:
-            # danh sách từ điển, hay danh sách các features 
+            # iterate over all the features 
             words = [x for x in range(data.shape[1])]
             min_entropy = np.inf
             branching = [0, 0]
             for w in words:
-                #thử tất cả các word, chọn word cho entropy bé nhất
+                # try all possible partitions along this word and return the lowest entropy(le)
+                # if le is smaller that the current minimum, modify
                 data_word = data[:, w]
                 split, entropy = self.find_split(data_word, classes)
+                # search word for the smallest entropy
                 if entropy < min_entropy:
                     min_entropy = entropy
                     branching = [w, split]
@@ -168,7 +200,7 @@ class DecisionTreeClassifier:
             if parent_node is not None:
                 new_node.info_gain = abs(parent_node.entropy - min_entropy)
 
-            if len(data.shape) == 1: # nếu dữ liệu chỉ có một word
+            if len(data.shape) == 1:  # data only contains one-word
                 data = data.reshape((len(data), 1))
 
             left_branch = data[:, branching[0]] <= branching[1]
@@ -178,7 +210,7 @@ class DecisionTreeClassifier:
             left_classes = classes[left_branch]
             right_classes = classes[right_branch]
 
-            # xác minh nếu phân vùng đặt tất cả các mẫu vào chỉ một nhánh
+            # verify if partitioning puts all samples into only one branch
             if left_branch.all():
                 new_node.convert_to_leaf(self.select_class(left_classes))
                 return new_node
@@ -201,21 +233,23 @@ class DecisionTreeClassifier:
                 new_node.convert_to_leaf(self.select_class(left_classes))
                 return new_node
 
-            # xac thuc neu co level ben duoi
+            # validate if there is already a level below
             try:
                 self.nodes[current_depth + 1]
             except IndexError:
                 self.nodes.append([])
 
-            # goi de quy de tinh toan tren hai nut con
+            # recursively call self again on the two children nodes
             new_node.child[0] = self.fit(left_data, left_classes, current_depth=current_depth + 1,
                                            parent_node=new_node, is_leaf=is_leaf)
             new_node.child[1] = self.fit(right_data, right_classes, current_depth=current_depth + 1,
                                            parent_node=new_node, is_leaf=is_leaf)
             return new_node
 
-    # cham classify mot diem du lieu
-    def classify_sample(self, sample):
+    def classify(self, sample):
+        """
+        takes one sample and classifies it with a class
+        """
         node = self.nodes[0][0]
         while isinstance(node.child[0], Node):
             s = sample[node.word]
@@ -223,11 +257,13 @@ class DecisionTreeClassifier:
             node = node.classify(s)
         return node.child[0]
 
-    #ham predict, tinh toan class cho data
     def predict(self, data):
+        """
+        calculates predicted classes for the supplied dataset
+        """
         classes = np.zeros(len(data))
         for y, x in enumerate(data):
-            classes[y] = self.classify_sample(x)
+            classes[y] = self.classify(x)
         return classes
 
     def accuracy(self, data, expected):
@@ -236,6 +272,9 @@ class DecisionTreeClassifier:
         return (1. * np.sum(same_values)) / len(predicted)
 
     def desciption(self):
+        """
+        return detail about tree, include number of node and depth of tree
+        """
         n = 0
         for level in self.nodes:
             n += len(level)
@@ -277,13 +316,12 @@ def main():
     depth = 4
     metrics_dt = []
     f = open("data/test/tree.txt", 'wb')
-    print(words)
     while True:  # for depth in range(1):
         print ('dt ' + str(depth))
-        tree = decision_tree(depth, words)
+        tree = DecisionTreeClassifier(depth, words)
         tree.fit(train_data, train_label, is_root=True)
-        m_train = tree.predict(train_data, train_label)
-        m_test = tree.predict(test_data, test_label)
+        m_train = tree.predict(train_data)
+        m_test = tree.predict(test_data)
         metrics_dt.append([m_train, m_test])
         print(tree.print_tree())
         print(m_test)

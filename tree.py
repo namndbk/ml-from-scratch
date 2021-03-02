@@ -104,6 +104,9 @@ class DecisionTreeClassifier:
         return entropy[0][0]
 
     def compute_info_gain(self):
+        """
+        Compute information gain
+        """
         for level in self.nodes:
             for node in level:
                 if (node.level == (self.depth_limit-1)):
@@ -113,7 +116,7 @@ class DecisionTreeClassifier:
 
     def print_tree(self):
         """
-        print tretree structure
+        Print tretree structure
         """
         map = []
         rep = self.desciption()+'\n'
@@ -142,9 +145,11 @@ class DecisionTreeClassifier:
 
     def find_split(self, words, classes):
         """
-        finds the split with lowest entropy
+        Finds the split with lowest entropy
         """
+        # get List unique of word
         unique_words = np.unique(words)
+        # min_entropy init
         min_entropy = np.inf
         split = 0
         for u in unique_words:
@@ -152,7 +157,7 @@ class DecisionTreeClassifier:
             right_side = (words > u)
             entropy_left = self.get_entropy(classes[left_side])
             entropy_right = self.get_entropy(classes[right_side])
-            # trong so trung binh cua entropy
+            # weighted mean of entropies
             w_entropy = (np.sum(left_side) * entropy_left + np.sum(right_side) * entropy_right) / len(classes)
             if w_entropy < min_entropy:
                 min_entropy = w_entropy
@@ -181,7 +186,7 @@ class DecisionTreeClassifier:
                 leaf_node.info_gain = abs(parent_node.entropy - init_entropy)
             return leaf_node
         else:
-            # iterate over all the features 
+            # iterate over all the features
             words = [x for x in range(data.shape[1])]
             min_entropy = np.inf
             branching = [0, 0]

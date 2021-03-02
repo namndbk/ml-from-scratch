@@ -208,9 +208,9 @@ class DecisionTreeClassifier:
                 self.nodes.append([])
 
             # goi de quy de tinh toan tren hai nut con
-            new_node.child[0] = self.train(left_data, left_classes, current_depth=current_depth + 1,
+            new_node.child[0] = self.fit(left_data, left_classes, current_depth=current_depth + 1,
                                            parent_node=new_node, is_leaf=is_leaf)
-            new_node.child[1] = self.train(right_data, right_classes, current_depth=current_depth + 1,
+            new_node.child[1] = self.fit(right_data, right_classes, current_depth=current_depth + 1,
                                            parent_node=new_node, is_leaf=is_leaf)
             return new_node
 
@@ -281,9 +281,9 @@ def main():
     while True:  # for depth in range(1):
         print ('dt ' + str(depth))
         tree = decision_tree(depth, words)
-        tree.train(train_data, train_label, is_root=True)
-        m_train = tree.guess_class(train_data, train_label)
-        m_test = tree.guess_class(test_data, test_label)
+        tree.fit(train_data, train_label, is_root=True)
+        m_train = tree.predict(train_data, train_label)
+        m_test = tree.predict(test_data, test_label)
         metrics_dt.append([m_train, m_test])
         print(tree.print_tree())
         print(m_test)

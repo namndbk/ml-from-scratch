@@ -12,6 +12,13 @@ correct_mapping = {
 }
 
 def remove_special(text):
+    """
+    Remove special character
+    @param: text
+    @type: str
+    @return: text
+    @rtype: str
+    """
     sent = re.sub("%|:|'|,|\"|\(|\) |\)|\*|-|(http\S+)|(@\S+)|RT|\#|!|:|\.|[0-9]|\/|\. |\.|\“|’s|;|–|” |\\n|&|-|--",'', text)
     sent = sent.split()
     for i in range(len(sent)):
@@ -20,6 +27,12 @@ def remove_special(text):
     return ' '.join(sent)
 
 def preprocess(sentence):
+    """
+    Preprocessing for text: remove special character, remove stop word, lower
+    @param: text, type str
+    @return: List of word
+    @rtype: List[str] 
+    """
     sentence = remove_special(sentence)
     # stop_words = load_stop_words()
     new_sentences = []
@@ -42,6 +55,9 @@ def load_stop_words():
 
 
 def parse_file(file_name):
+    """
+    Load data
+    """
     sentences = []
     labels = []
     with open(file_name, 'r') as f:
@@ -53,15 +69,31 @@ def parse_file(file_name):
 
 
 def parse(file_name):
+    """
+    Load data csv
+    @param: path file
+    @type: str
+    @return:
+        sents: List of sentence
+        labels: List of label
+    @rtype:
+        sents: List[str]
+        labels: List[str]
+    """
     data = pd.read_csv(file_name)
-    sents, lables = [], []
+    sents, labels = [], []
     for i in range(data.shape[0]):
         sents.append(preprocess(data.iloc[i, 0]))
         lables.append(data.iloc[i, -1])
-    return sents, lables
+    return sents, labels
 
 
-def build_dict(sentences, max_df):
+def build_dict(sentences):
+    """"
+    Building dictionary for dataset
+    @param: List of sentence
+    @type: List[str]
+    """
     DICT = {}
     count = 0
     print('Building dictionary !')
@@ -83,6 +115,17 @@ def load_dict():
         return {}
 
 def bag_of_word(sentence, DICT):
+    """
+    Create bag_of_word vector. Sentence represented by one vector
+    E.g: [0, 1, 3, 4, 0]
+    @param:
+        sentences: sentence
+        DICT: dictionary
+    @type:
+        sentences: string
+        DICT: dict
+    @return: vector, element i in vector = count(word i in sentence) (i must in DICT)
+    """
     vector = np.zeros(len(DICT))
     for token in sentence:
         if token in DICT:
@@ -93,13 +136,24 @@ def bag_of_word(sentence, DICT):
 
 
 def load_iris_data():
+    """
+    Load iris data with two label
+    @return:
+        X: data point
+        y: label
+    @rtype:
+        X: narray
+        y: array
+    """
     data = load_iris()
     _X = data.data
     _y = data.target
+    # Get data with label 0, 1
     X = _X[_y < 2]
     y = _y[_y < 2]
     for i, c in enumerate(y):
         if c == 0:
+            # transform label 0 to -1
             y[i] = -1
     return X, y
 

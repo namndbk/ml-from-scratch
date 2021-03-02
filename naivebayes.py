@@ -1,7 +1,6 @@
 import numpy as np
 import utils
 from sklearn.model_selection import train_test_split
-# from tree import DecisionTreeID3
 import math
 import pandas as pd
 from tree import DecisionTreeClassifier
@@ -9,39 +8,54 @@ from tree import DecisionTreeClassifier
 class MultinomialNB():
     def __init__(self, alpha=1.0):
         """
-        alpha - hej so lam tro xac suat
-        prob - ma tran xac suat cua tung tu thuoc moi class- prob[i, j] - xac suat tu thu j roi vao class i
-        prob_c - luu xac suat cua class
-        __classes - danh sach cac nhan
+        @param: alpha - probability smoothing coefficient
         """
         self.alpha = alpha
         self.__classes = []
         self.prob = None
         self.prob_c = None
     def fit(self, X_train, y_train):
-        # lay ra danh sach class co trong data train
+        """
+        Compute and learn distribuition data for naive bayes
+        @param:
+            X_train: data point
+            Y_train: label of data
+        @type:
+            X_train: narray
+            Y_train: narray
+        """
+        # get List unique label in data train
         self.__classes = list(set(y_train))
-        # ma tran count luu so tu xuat hien count[i, j] - so lan tu j xuat hien trong class i
+        # define variable
+        # count: matrix, the occurrence number of each word in each label
+        # e.g count[i, j] = number of word j with label i
         count = np.zeros((len(self.__classes), X_train.shape[1]))
         len_class = np.zeros(len(self.__classes))
-        # khoi tao ma tran prob_c prob
+        # prob_c: array, occurences number of class c in data train
+        # prob: maxtrix, probability distribution of word in each label in data train
         self.prob_c = np.zeros(len(self.__classes))
         self.prob = np.zeros((len(self.__classes), X_train.shape[1]))
-        # lap qua du lieu
+        # loop through data train
         for i, c in enumerate(y_train):
-            # dem so lan class c xuat hien
+            # count the number of occurrences label c 
             self.prob_c[int(c) - 1] += 1
             len_class[int(c) - 1] += np.sum(X_train[i])
             count[int(c) - 1] += X_train[i]
-        # tinh xac suat cua class
+        # compute probability of class c
         self.prob_c = self.prob_c/X_train.shape[0]
-        # duyet qua tung class, dem xem trong moi class do co nhung tu nao, xuat hien bao nhieu lan => dua thanh xac suat
+        # compute probability distribution of word each label based on number of occurrence (count matrix)
         for c in self.__classes:
             self.prob[int(c) - 1] = (count[int(c) - 1] + self.alpha)/(len_class[int(c) - 1] + self.alpha*X_train.shape[1])
 
 
     def predict(self, X_test):
-        # bien y_pred luu lai nhan
+        """"
+        Predict label for data test
+        @param: data test
+        @type: narray[int]
+        @return: label (int)
+        @rtype: narray
+        """
         y_pred = []
         # duyet qua tung diem du lieu test
         for i in range(X_test.shape[0]):
@@ -59,9 +73,12 @@ class MultinomialNB():
                     _max = _prob
                     _c = c
             y_pred.append(_c)
-        return y_pred
+        return np.array(y_pred)
 
     def accuracy(self, y_test, y_pred):
+        """
+        Return accuracy 
+        """
         count = 0
         for i in range(len(y_test)):
             if str(y_test[i]) == str(y_pred[i]):

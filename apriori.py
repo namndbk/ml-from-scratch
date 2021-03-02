@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pickle
 from itertools import combinations
 
 
@@ -66,7 +67,7 @@ def get_candidates(transaction_list: list):
     @param transaction_list: list of transactions with transaction items being coded by their sequential indexes
     @type transaction_list: List[Set[int]]
     @return: list of sets of size-one-candidate (one-item sets)
-    @rtype: List[set]
+    @rtype: List[Set(frozen)]
     """
 
     # size_one_candidates: a list to store size-one candidates (one-item sets)    
@@ -82,23 +83,23 @@ def get_candidates(transaction_list: list):
 
 def generate_candidate_k(freq_item: list, k: int) -> list:
     """
-    Generate list of  of size-k candidates from the  frequent item list (freq_item)
+    Generate list of  of size-(k+2) candidates from the  frequent item list (freq_item)
 
-    @param freq_item: list of qualified item sets (item sets with support >= min_support
-    @type freq_item:  list
-    @param k:
-    @type k:
-    @return:
-    @rtype:
+    @param freq_item: List of qualified item sets (item sets with support >= min_support
+    @type freq_item:  List[]
+    @param k: k common items in two (k+1) itemset
+    @type k: int
+    @return: List of frequece itemset, size = k + 2
+    @rtype: List[frozen]
     """
     size_k_candidates = []
 
     # to generate candidates of size two (2-item sets)
 
     if k == 0:
-        # TODO: giải thích tại sao?
+        # if k = 0, size of itemset = 1 => size of common items = 0
         for f1, f2 in combinations(freq_item, 2):
-            item = f1 | f2  # union of two sets)
+            item = f1 | f2  # union of two sets
             size_k_candidates.append(item)
 
     # k > 0
@@ -106,10 +107,11 @@ def generate_candidate_k(freq_item: list, k: int) -> list:
         for f1, f2 in combinations(freq_item, 2):
             # if the two (k+1)-item sets both has k common items
             # then they will be combined to be the (k+2)-item candidate
-            # TODO: giải thích tại sao?
+            # k >= 1, gen list common items in two itemset size (k+1)
             intersection = f1 & f2
+            # if size of common items = k
             if len(intersection) == k:
-                item = f1 | f2
+                item = f1 | f2 # union of two sets, expected size-itemset = k + 2
                 if item not in size_k_candidates:
                     size_k_candidates.append(item)
 
@@ -121,13 +123,16 @@ def create_freq_item(transaction_list, size_k_candidates, min_support):
     find candidates whose support >= min_support
     @param transaction_list: list of transactions with transaction items being coded by their sequential indexes
     @type transaction_list: List[Set[int]]
-    @param size_k_candidates:
-    @type size_k_candidates:
+    @param size_k_candidates: size-k itemset
+    @type size_k_candidates: List
     @param min_support: The minimum fraction of transactions an itemets needs to occur in to be deemed frequent
     @type min_support: float
-    @return:                    
+    @return:
+        freq_item: frequence itemset have support >= min_support
+        item_support: itemset with support index               
     @rtype:
-
+        freq_item: List[frozen]
+        item_support: Dict, item: support, support is float, between 0 and 1
     """
     # loop through the transaction and compute the count for each candidate (item)
     item_count = {}
@@ -145,7 +150,7 @@ def create_freq_item(transaction_list, size_k_candidates, min_support):
                     item_count[candidate] += 1
 
     # total number of transactions
-    n_row = transaction_list.shape[0]
+    n_row = len(transaction_list)
 
     # freq_item indicates the frequency of occurence of each item set. To store the frequent item sets
     freq_item = []
@@ -166,12 +171,19 @@ def create_freq_item(transaction_list, size_k_candidates, min_support):
 
 def apriori(transaction_list, min_support=0.01):
     """
-    @param transaction_list:
-    @type transaction_list:
-    @param min_support:
-    @type min_support:
+    pass in the transaction data and the minimum support threshold to obtain the frequent itemset. 
+        Also store the support for each itemset, they will be used in the rule generation step
+    @param transaction_list: list of transactions with transaction items being coded by their sequential indexes
+    @type transaction_list: List[Set(int)]
+    @param min_support: Minumum support of the itemsets returned. 
+        The support is frequency of which the items in the rule appear together in the data set.
+    @type min_support: Float between 0 and 1
     @return:
+        freq_items: List of list k-itemset, k = 0, ..n
+        item_support_dict: Dict of itemset, size k = 0, ..n
     @rtype:
+        freq_items: List[List]
+        item_support_dict: Dict, item: support, support is Float between 0 and 1
     """
     # generate size-one-candidates (one-item sets) from the list of transactions
     size_one_candidates = get_candidates(transaction_list)
@@ -207,21 +219,51 @@ def apriori(transaction_list, min_support=0.01):
 
 def compute_conf(freq_items, item_support_dict, freq_set, subsets, min_confidence):
     """
-    sinh luat va check min_confidence
+    Create the rules and returns the rules info and the rules's
+        right hand side (used for generating the next round of rules) 
+        if it surpasses the minimum confidence threshold
+    @params:
+        freq_items: List of list k-itemset, k = 0, ..n
+        item_support_dict: Dict of itemset, size k = 0, ..n
+        freq_set: itemset
+        subsets: subset of freq_set
+        min_confidence: The minimum confidence of the rules returned. Given a rule X -> Y, the
+            confidence is the probability of Y, given X, i.e. P(Y|X) = conf(X -> Y)
+    @type:
+        freq_items: List[List]
+        item_support_dict: Dict, item: support, support is Float between 0 and 1
+        freq_set: List[frozenset]
+        subsets: frozenset
+        min_confidence: Float between 0 and 1
+    @return:
+        rules: List of rule, rule (Typle) include:
+            - lhs: left hand side
+            - rhs: right hand size
+            - conf: confidence score
+            - lift: lift score
+        right_hand_size: List of rhs
+    @rtype:
+        rules: List[Tuple]
+        right_hand_size: List[frozenset]
     """
+    # rule X->Y-X
+    # lhs = X
+    # rhs = Y-X
     rules = []
     right_hand_side = []
 
+    # create the left hand side of the rule
+    # and add the rules if it's greater than
+    # the confidence threshold
     for rhs in subsets:
-        # tao danh sach ben trai cua luat lien ket, them vao rules neu luat sinh ra > min_confidence
-        # lhs - danh sach item phia trai cua luat lien ket, rhs - danh sach item phia ben phai
+        # create the left hand side of the rule
         lhs = freq_set - rhs
-        # tinh confidence cua luat
+        # compute confidence of rule
         conf = item_support_dict[freq_set] / item_support_dict[lhs]
-        # check neu luat du dieu kien >= min_conf
+        # if conf >= min_confidence, add rule to List of rule
         if conf >= min_confidence:
             lift = conf / item_support_dict[rhs]
-            # rules-luat lien ket
+            # defince rule and add into List of rule returned
             rules_info = lhs, rhs, conf, lift
             rules.append(rules_info)
             right_hand_side.append(rhs)
@@ -230,19 +272,44 @@ def compute_conf(freq_items, item_support_dict, freq_set, subsets, min_confidenc
 
 
 def create_rules(freq_items, item_support_dict, min_confidence):
+    """
+    Create the association rules,
+    rule contain rule, left hand side, right hand side, confidence, lift
+    @param:
+        freq_items: List of list k-itemset, k = 0, ..n
+        item_support_dict: Dict of itemset, size k = 0, ..n
+        min_confidene: Minimum of confidence score
+    @type:
+        freq_items: List[List]
+        item_support_dict: Dict, item: support, support is Float between 0 and 1
+        min_confidence: Float between 0 to 1
+    @return: List of rules
+    @rtype: List[tuple]
+    """
     association_rules = []
 
-    # duyet qua tung danh sach cac k-item set pho bien
-    # tinh tu k = 2, do k =1 itemset chi co mot phan tu thi khong the tach thanh lhs va rhs
+    # for the list that stores the frequent items, loop through
+    # the second element to the one before the last to generate the rules
+    # because the last one will be an empty list. It's the stopping criteria
+    # for the frequent itemset generating process and the first one are all
+    # single element frequent itemset, which can't perform the set
+    # operation X -> Y - X
     for idx, freq_item in enumerate(freq_items[1:(len(freq_items) - 1)]):
         for freq_set in freq_item:
-
+            # start with creating rules for single item on
+            # the right hand side
             subsets = [frozenset([item]) for item in freq_set]
             rules, right_hand_side = compute_conf(
                 freq_items, item_support_dict, freq_set, subsets, min_confidence)
             association_rules.extend(rules)
 
-            # duyet qua cac itemset pho bien, size itemset tu k=3 tro len
+            # starting from 3-itemset, loop through each length item
+            # to create the rules, as for the while loop condition,
+            # e.g. suppose you start with a 3-itemset {2, 3, 5} then the 
+            # while loop condition will stop when the right hand side's
+            # item is of length 2, e.g. [ {2, 3}, {3, 5} ], since this
+            # will be merged into 3 itemset, making the left hand side
+            # null when computing the confidence
             if idx != 0:
                 k = 0
                 while len(right_hand_side[0]) < len(freq_set) - 1:
@@ -256,8 +323,8 @@ def create_rules(freq_items, item_support_dict, min_confidence):
 
 
 if __name__ == "__main__":
-    X, items = parse("data/a1_market_sample.csv")
+    X, items = parse("data/a1_market_basket_optimisation.csv")
     X = np.array(X)
     freq_items, item_support_dict = apriori(X, min_support=0.01)
-    association_rules = create_rules(freq_items, item_support_dict, min_confidence=0.5)
-    print(association_rules[:5])
+    association_rules = create_rules(freq_items, item_support_dict, min_confidence=0.05)
+    print(association_rules[-5:])

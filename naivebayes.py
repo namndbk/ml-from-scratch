@@ -100,8 +100,6 @@ if __name__ == '__main__':
             else:
                 X[i, j] = 0
     words = [x for x in DICT]
-    # X = pd.DataFrame(X)
-    # y = pd.DataFrame(y)
     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, random_state=42)
     print(y_test)
     # model = MultinomialNB(0.001)

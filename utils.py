@@ -84,7 +84,7 @@ def parse(file_name):
     sents, labels = [], []
     for i in range(data.shape[0]):
         sents.append(preprocess(data.iloc[i, 0]))
-        lables.append(data.iloc[i, -1])
+        labels.append(data.iloc[i, -1])
     return sents, labels
 
 

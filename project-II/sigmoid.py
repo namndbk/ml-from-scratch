@@ -1,10 +1,5 @@
 import numpy as np
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_iris
-import utils
-from knn import KKNeighborsClassifier
-from perceptron import PerceptronClassifier
+
 
 import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -45,11 +40,11 @@ class LogisticClassifier:
         """
         return cross entropy cost function
         @param:
-            X: matrix of data point
+            X: matrix of data point or one data point
             y: label of data
             W: weight
         @type:
-            X: narray[float]
+            X: narray 
             y: narray
             W: array
         @return: cross entropy
@@ -61,29 +56,19 @@ class LogisticClassifier:
 
     def fit(self, X, y):
         """
-        training sigmoid model with Stochastic Gradient Descent
+        Training sigmoid model based on Stochastic Gradient Descent
         @params:
             X: matrix data train
             y: label
-            w_init: weight init
-            lr: learning rate
-            tol:
-            max iter: maximum iteration
-            regurlar: regular coefficient
         @type:
-            X: narray[float]
-            y: array
-            w_init: array[float]
-            lr: float
-            tol:float
-            max_iter: int
-            regular: float
+            X: narray (2d)
+            y: array (1d)
         @return
             w: list of weight, final element is best weight
-            max_iter: number of iteration when model coverged
+            it: number of iteration when model coverged
         @rtype:
-            w: List[array]
-            max_iter: int
+            w: narray (1d)
+            it: int
         """
         np.random.seed(42)
         X = np.array(X)
@@ -95,6 +80,7 @@ class LogisticClassifier:
         # weight after check
         w_check_after = None
         while it < self.max_iter:
+            # Get random index list of all data point in data training 
             mix_id = np.random.permutation(N)
             for i in mix_id:
                 xi = X[i]

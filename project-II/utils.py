@@ -72,7 +72,7 @@ def parse(filepath: str, has_header: bool = True):
             next(reader, None)  # skip the headers
         for row in reader:
             sents.append(preprocess(row[0]))
-            lables.append(row[1])
+            lables.append(int(row[1]))
 
     return sents, lables
 
@@ -97,6 +97,7 @@ def bag_of_word(sentence, DICT):
 
 
 if __name__ == '__main__':
-    DICT = load_dict()
-    for x in DICT:
-        print(x)
+    # DICT = load_dict()
+    # for x in DICT:
+    #     print(x)
+    build_dict()

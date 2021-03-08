@@ -1,8 +1,11 @@
 import numpy as np
 
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+
 class PerceptronClassifier:
     
-    def __init__(self, lr=0.01, max_iter=1000, tol=1e-3):
+    def __init__(self, lr=0.05, max_iter=10000, tol=1e-3):
         """
         @param:
             - lr: learning rate
@@ -61,10 +64,10 @@ class PerceptronClassifier:
             - y: narray
         @return:
             - w: weight after model coverged
-            - epoch + 1: number of iteration after model coverged
+            - it: number of iteration after model coverged
         @rtype:
             - w: narray
-            - epoch + 1: int
+            - it: int
         """
         np.random.seed(42)
         # weight init
@@ -72,8 +75,11 @@ class PerceptronClassifier:
         self.w = w_init
         # N: number of data train
         N = X.shape[0]
-        for epoch in range(self.max_iter):
-            for i in range(N):
+        it = 0
+        while it < self.max_iter:
+            # Get random index list of all data point in data training 
+            mix_id = np.random.permutation(N)
+            for i in mix_id:
                 # Get data point xi and label of it
                 xi = X[i]
                 yi = y[i]
@@ -84,8 +90,8 @@ class PerceptronClassifier:
             # tol: threshold
             # N: number of data train
             if self.has_converged(X, y, self.w) <= self.tol*N:
-                return self.w, (epoch + 1)
-        return self.w, (epoch + 1)
+                return self.w, it
+        return self.w, it
     
     def predict(self, X_test):
         """

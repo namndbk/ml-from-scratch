@@ -81,6 +81,7 @@ class KKNeighborsClassifier:
         function = getattr(self, self._metrics[self.metric])
         # compute distance or similarity of X_test versus all other points in data train based on self.metric metric
         distances = function(X_test)
+        # Sort distances in a descending order
         distances = np.argsort(distances, axis=1)
         k_nearest = distances[:, :self.n_neighbors]
         # Get number point data of data train

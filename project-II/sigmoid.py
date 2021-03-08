@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 class LogisticClassifier:
 
-    def __init__(self, lr=0.001, max_iter=10000, tol=1e-3):
+    def __init__(self, lr=0.05, max_iter=10000, tol=1e-3):
         """
         @param:
             - lr: learning rate
@@ -100,9 +100,9 @@ class LogisticClassifier:
                 xi = X[i]
                 yi = y[i]
                 zi = self.sigmoid(np.dot(xi, self.w))
-                # Update weight via gradient f
+                # Update weight via gradient descent
                 # w_new = W[-1] + self.lr *  ((yi - zi) * xi + regular*W[-1])
-                self.w = self.w + self.lr *  (yi - zi) * xi
+                self.w = self.w + self.lr * (yi - zi) * xi
                 it += 1
                 if it % check_w_after == 0:
                     # first check, save weights into w_check_after, not check converged
@@ -119,7 +119,7 @@ class LogisticClassifier:
     
 
     def predict(self, X):
-        # Predict data test
+        # Predict data
         y_pred = self.sigmoid(np.dot(X, self.w))
         for i, c in enumerate(y_pred):
             if c < 0.5:
@@ -127,33 +127,3 @@ class LogisticClassifier:
             else:
                 y_pred[i] = 1
         return y_pred
-
-data = load_iris()
-X = data.data
-y = data.target
-X_train, y_train = [], []
-for i in range(len(y)):
-    if y[i] == 1:
-        y_train.append(y[i])
-        X_train.append(X[i])
-    elif y[i] == 0:
-        y_train.append(0)
-        X_train.append(X[i])
-X = np.array(X_train)
-y = np.array(y_train)
-
-if __name__ == "__main__":
-    X_, y = utils.parse('data/emails.csv')
-    DICT = utils.load_dict()
-    X = np.zeros((len(X_), len(DICT)))
-    for i in range(len(X_)):
-        X[i] = utils.bag_of_word(X_[i], DICT)
-    X = np.array(X)
-    y = np.array(y)
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, random_state=42)
-    print(np.array(X_train).shape)
-    model = KKNeighborsClassifier()
-    _, it = model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    print(np.sum(y_pred == y_test) / len(y_pred))

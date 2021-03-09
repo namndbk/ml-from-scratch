@@ -1,9 +1,12 @@
 import numpy as np
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, accuracy_score
 from perceptron import PerceptronClassifier
 import utils
+
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 
 def main():
@@ -19,8 +22,8 @@ def main():
     for i, c in enumerate(y):
         if c == 0:
             y[i] = -1
-
-    X = np.array(X)
+    
+    X = np.array(X[:, :1000])
     y = np.array(y)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, random_state=42)
@@ -29,9 +32,10 @@ def main():
     model.fit(X_train, y_train)
 
     y_pred = model.predict(X_test)
+    labels = np.unique(y_train)
 
-    print("\tAccuracy: {}%".format(np.sum(y_pred == y_test) / len(y_pred) * 100))
-    print("\tClassification report: \n{}".format(classification_report(y_test, y_pred)))
+    print("\tAccuracy: {}%".format(accuracy_score(y_test, y_pred) * 100))
+    print("\tClassification report: \n{}".format(classification_report(y_test, y_pred, labels=labels)))
 
 
 if __name__ == "__main__":

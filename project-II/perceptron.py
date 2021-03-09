@@ -91,6 +91,7 @@ class PerceptronClassifier:
             # N: number of data train
             if self.has_converged(X, y, self.w) <= self.tol*N:
                 return self.w, it
+            it += 1
         return self.w, it
     
     def predict(self, X_test):

@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.spatial.distance import cdist
+from distance import cdist
 
 
 class KKNeighborsClassifier:
@@ -23,7 +23,7 @@ class KKNeighborsClassifier:
         else:
             self.metric = metric
     
-    def _l1_distance(self, X):
+    def _l1_distance(self, X_test):
         """
         Return manhattan distance of X_test versus all other points in data train
         narray[i, j] = distance from X[i] to self.X[j] based on manhattan distance
@@ -32,9 +32,9 @@ class KKNeighborsClassifier:
         @return: manhattan distance of X_test versus all other points in data train
         @rtype: narray[int]
         """
-        return cdist(X, self.X, "cityblock")
+        return cdist(X_test, self.X_train, "cityblock")
 
-    def _l2_distance(self, X):
+    def _l2_distance(self, X_test):
         """
         Return euclidean distance of X_test versus all other points in data train
         narray[i, j] = distance from X[i] to self.X[j] based on euclidean distance
@@ -42,9 +42,9 @@ class KKNeighborsClassifier:
         @type: narray[int]
         @return: euclidean distance of X_test versus all other points in data train
         @rtype: narray[int]"""
-        return cdist(X, self.X, "euclidean")
+        return cdist(X_test, self.X_train, "euclidean")
     
-    def _cosine_similarity(self, X):
+    def _cosine_similarity(self, X_test):
         """
         Return cosine similarity of X_test versus all other points in data train
         narray[i, j] = distance from X[i] to self.X[j] based on  cosine similarity
@@ -53,7 +53,7 @@ class KKNeighborsClassifier:
         @return: cosine similarity distance of X_test versus all other points in data train
         @rtype: narray[int]
         """
-        return cdist(X, self.X, "cosine")
+        return cdist(X_test, self.X_train, "cosine")
     
     def fit(self, X_train, y_train):
         """
@@ -65,10 +65,10 @@ class KKNeighborsClassifier:
             - X_train: narray[int]
             - y_train: narray[int]
         """
-        self.X = X_train
-        self.y = y_train
+        self.X_train = X_train
+        self.y_train = y_train
         # Get list of unique labels
-        self.classes = np.unique(self.y)
+        self.classes = np.unique(self.y_train)
     
     def predict(self, X_test):
         """
@@ -84,10 +84,9 @@ class KKNeighborsClassifier:
         # Sort distances in a descending order
         distances = np.argsort(distances, axis=1)
         k_nearest = distances[:, :self.n_neighbors]
-        # Get number point data of data train
-        N = len(self.X)
+
         # Get list labels of all point data in data train nearest each point data in data set
-        labels = self.y[k_nearest]
+        labels = self.y_train[k_nearest]
         # Declare results variable, save all label of data test returned
         results = []
         for tag in labels:

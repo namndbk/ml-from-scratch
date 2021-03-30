@@ -1,10 +1,12 @@
 import numpy as np
-from scipy.spatial.distance import cdist
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 from knn import KKNeighborsClassifier
 import utils
+
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def main(n_neighbors=5):

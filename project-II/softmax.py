@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 class SoftmaxClassifier:
 
-    def __init__(self, lr=0.05, max_iter=10000, tol=1e-3):
+    def __init__(self, lr=0.05, max_iter=10000, tol=1e-3, use_bias=True):
         """
         @param:
             - lr: learning rate
@@ -23,6 +23,8 @@ class SoftmaxClassifier:
         self.lr = lr
         self.tol = tol
         self.max_iter = max_iter
+        self.use_bias = use_bias
+        self.bias = None
     
     def _convert_label(self, y):
         """
@@ -61,7 +63,7 @@ class SoftmaxClassifier:
         z_prime = z - np.max(z, axis=-1, keepdims=True)
         return np.exp(z_prime) / np.sum(np.exp(z_prime), axis=-1, keepdims=True)
     
-    def cross_entropy_loss(self, X, y, w):
+    def cross_entropy_loss(self, X, y, w, bias=None):
         """
         return cross entropy cost function
         @param:
@@ -75,7 +77,10 @@ class SoftmaxClassifier:
         @return: cross entropy
         @rtype: float
         """
-        y_hat = self.softmax(np.dot(X, w))
+        if bias is None:
+            y_hat = self.softmax(np.dot(X, w))
+        else:
+            y_hat = self.softmax(np.dot(X, w) + bias)
         return - np.sum(y * np.log(y_hat))
 
     def fit(self, X, y):
@@ -104,6 +109,8 @@ class SoftmaxClassifier:
         N = X.shape[0]
         # init weight, dimension = (d, C)
         self.w = np.random.randn(d, C)
+        if self.use_bias:
+            self.bias = np.random.randn(C)
         it = 0
         while it < self.max_iter:
             # Get random index list of all data point in data training 
@@ -112,23 +119,38 @@ class SoftmaxClassifier:
                 xi = X[i].reshape(1, d)
                 yi = y[i]
                 # Compute softmax
-                ai = self.softmax(np.dot(xi, self.w))
+                if self.use_bias:
+                    ai = self.softmax(np.dot(xi, self.w) + self.bias)
+                else:
+                    ai = self.softmax(np.dot(xi, self.w))
                 # Update weight based on gradient descent
                 self.w = self.w - self.lr * np.dot(xi.T, (ai - yi))
+                if self.use_bias:
+                    self.bias = self.bias - self.lr * (ai - yi)
                 it += 1
                 # if this is first check, save w_check_after = self.w
                 if it == 20:
                     w_check_after = self.w
+                    if self.use_bias:
+                        bias_check_after = self.bias
                 else:
                     if it % 20 == 0:
                         # if np.linalg.norm(self.w - w_check_after) < self.tol:
                         # check condition coverges, if the difference about loss function between two consecutive checks is small enough, stop
                         # else: update w_check_after = self.w
-                        if abs(self.cross_entropy_loss(X, y, self.w) - self.cross_entropy_loss(X, y, w_check_after)) <= self.tol:
-                            return self.w, it
+                        if self.use_bias:
+                            if abs(self.cross_entropy_loss(X, y, self.w, self.bias) - self.cross_entropy_loss(X, y, w_check_after, bias_check_after)) <= self.tol:
+                                return self.w, self.bias, it
+                            else:
+                                bias_check_after = self.bias
                         else:
-                            w_check_after = self.w
-        return self.w, it
+                            if abs(self.cross_entropy_loss(X, y, self.w) - self.cross_entropy_loss(X, y, w_check_after)) <= self.tol:
+                                return self.w, it
+                        w_check_after = self.w
+        if self.use_bias:
+            return self.w, self.bias, it
+        else:
+            return self.w, it
 
     def predict(self, X_test):
         """
